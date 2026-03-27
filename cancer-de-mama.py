@@ -1,77 +1,54 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jan 14 21:45:34 2021
-
-@author: guilh
+Classificacao binaria - Cancer de mama (dataset UCI)
+Rede neural multicamada com backpropagation
 """
 
 import numpy as np
 from sklearn import datasets
+from sklearn.preprocessing import StandardScaler
 
-def sigmoid(soma):
-    return 1 / (1 + np.exp(-soma))
 
-#DERIVADA PARCIAL DA SIGMOID
-def derivadaSigmoid(sig):
-    return sig * (1 - sig)
+def sigmoid(x):
+    return 1 / (1 + np.exp(-np.clip(x, -500, 500)))
 
-#database
+
+def sigmoid_derivada(x):
+    return x * (1 - x)
+
+
+# Dataset
 base = datasets.load_breast_cancer()
-entradas = base.data
-valoresSaida = base.target
-saidas = np.empty([569, 1], dtype=int)
+entradas = StandardScaler().fit_transform(base.data)
+saidas = base.target.reshape(-1, 1)
 
-for i in range(569):
-    saidas[i] = valoresSaida[i]
+np.random.seed(42)
+pesos0 = np.random.randn(30, 10) * 0.1
+pesos1 = np.random.randn(10, 1) * 0.1
 
-#pesos aleatorios com a quantidade de neuronios
-pesos0 = 2*np.random.random((30,5)) - 1
-pesos1 = 2*np.random.random((5,1)) - 1
-
-epocas = 10000
-
-taxaDeAprendizagem = 0.3
-
-momento = 1
+epocas = 5000
+taxaDeAprendizagem = 0.01
 
 for i in range(epocas):
-    camadaEntrada = entradas
-    
-    #CAMADA OCULTA 
-    somaDaSinapse0 = np.dot(camadaEntrada, pesos0)
-    camadaOculta = sigmoid(somaDaSinapse0)
-    
-    #ULTIMA CAMADA 
-    somaDaSinapse1 = np.dot(camadaOculta, pesos1)
-    camadaDeSaida = sigmoid(somaDaSinapse1)
-    
-    #ERRO = RESPOSTA CORRETA - RESPOSTA ERRADA
-    erroDaCamadaDeSaida = saidas - camadaDeSaida
-    mediaAbsolutaDoErro = np.mean(abs(erroDaCamadaDeSaida))
-    print("\nErro de --> " + str(mediaAbsolutaDoErro))
-    
-    #DERIVADA E O DELTA DA CAMDADA DE SAIDA
-    derivadaDeSaida = derivadaSigmoid(camadaDeSaida)
-    deltaDeSaida = erroDaCamadaDeSaida * derivadaDeSaida
-    
-    
-    #Para fazer a multiplicacao de peso com o delta de saida
-    pesos1Transposta = pesos1.T
-    
-    #Formula = DeltaDeSaida * pesos * derivada sigmoide da camada oculta
-    deltaCamadaOculta = deltaDeSaida.dot(pesos1Transposta) * derivadaSigmoid(camadaOculta)
-    
-    #Transposta da camada oculta para a multiplicacao de matrizes
-    camadaOcultaTransposta = camadaOculta.T
-    
-    #atualizacao dos pesos da saida
-    novosPesosSaida = camadaOcultaTransposta.dot(deltaDeSaida)
-    pesos1 = (pesos1 * momento) + (novosPesosSaida * taxaDeAprendizagem)
-    
-    #atualizacao dos pesos da camda oculta
-    camadaEntradaTransposta = camadaEntrada.T
-    novosPesosCamadaOculta = camadaEntradaTransposta.dot(deltaCamadaOculta)
-    pesos0 = (pesos0 * momento) + (novosPesosCamadaOculta *  taxaDeAprendizagem)
-    
-    
-    
+    # Forward
+    camadaOculta = sigmoid(entradas.dot(pesos0))
+    camadaDeSaida = sigmoid(camadaOculta.dot(pesos1))
+
+    # Backpropagation
+    erroDeSaida = saidas - camadaDeSaida
+    deltaDeSaida = erroDeSaida * sigmoid_derivada(camadaDeSaida)
+
+    deltaCamadaOculta = deltaDeSaida.dot(pesos1.T) * sigmoid_derivada(camadaOculta)
+
+    pesos1 += camadaOculta.T.dot(deltaDeSaida) * taxaDeAprendizagem
+    pesos0 += entradas.T.dot(deltaCamadaOculta) * taxaDeAprendizagem
+
+    if (i + 1) % 500 == 0:
+        mae = np.mean(abs(erroDeSaida))
+        acc = np.mean((camadaDeSaida > 0.5).astype(int) == saidas)
+        print(f"Epoca {i+1:>5} | Erro medio: {mae:.6f} | Acuracia: {acc:.4f}")
+
+# Resultado final
+predicoes = (camadaDeSaida > 0.5).astype(int)
+acuracia = np.mean(predicoes == saidas)
+print(f"\nAcuracia final: {acuracia:.4f} ({int(acuracia * len(saidas))}/{len(saidas)})")

@@ -21,4 +21,8 @@ rede_neural = MLPClassifier(verbose=True,
                             )
 
 rede_neural.fit(entradas, saidas)
-rede_neural.predict([[5,7.2,5.1,10]])
+
+resultado = rede_neural.predict([[5, 7.2, 5.1, 10]])
+classes = data_iris.target_names
+print(f"\nPredicao para [5, 7.2, 5.1, 10]: {classes[resultado[0]]} (classe {resultado[0]})")
+print(f"Acuracia no treino: {rede_neural.score(entradas, saidas):.4f}")

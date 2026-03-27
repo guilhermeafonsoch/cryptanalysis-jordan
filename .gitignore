@@ -1,1 +1,13 @@
 /archives
+.venv/
+__pycache__/
+*.pyc
+
+# IDE / tools
+.vscode/
+.claude/
+
+# Generated files (regenerate via cipher_design.py, train_fast.py, visualization.py)
+cryptanalysis-jordan/state_table.csv
+cryptanalysis-jordan/models/
+cryptanalysis-jordan/visualizations/

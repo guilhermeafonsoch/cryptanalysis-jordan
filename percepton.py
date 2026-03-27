@@ -1,53 +1,45 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jan 13 13:21:38 2021
-
-@author: guilh
+Perceptron de camada unica - problemas linearmente separaveis (OR gate)
 """
-#Este tipo de percepton de uma camada serve para problemas linarmente separaveis 
 
 import numpy as np
-#or
-entradas = np.array([[0,0],[0,1],[1,0],[1,1]])
-saidas = np.array([0,1,1,1])
+
+# OR gate
+entradas = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+saidas = np.array([0, 1, 1, 1])
 
 pesos = np.array([0.0, 0.0])
-
 taxaDeAprendizagem = 0.1
 
-def stepFunction(soma):
-   if (soma >= 1):
-       return 1
-   return 0 
 
-#registros = entradas
+def stepFunction(soma):
+    return 1 if soma >= 1 else 0
+
+
 def calculaSaida(registro):
-    s = registro.dot(pesos)
-    return stepFunction(s)
+    return stepFunction(registro.dot(pesos))
+
 
 def treinar():
-    erroTotal = 1
-    while erroTotal != 0:
+    global pesos
+    epoca = 0
+    while True:
+        epoca += 1
         erroTotal = 0
         for i in range(len(saidas)):
-            #calculo das saidas
-            print(entradas[i])
-            print(pesos)
-            saidaCalculada = calculaSaida(np.asarray(entradas[i]))
+            saidaCalculada = calculaSaida(entradas[i])
             erro = saidas[i] - saidaCalculada
-            erroTotal += erro
-            for j in range (len(pesos)):
-                pesos[j] = pesos[j] + (taxaDeAprendizagem * entradas[i][j] * erro)
-                print("Pesos atualizados: " + str(pesos[j]))
-                
-        print("Total de erros: " + str(erroTotal))
+            erroTotal += abs(erro)
+            pesos += taxaDeAprendizagem * entradas[i] * erro
+
+        if erroTotal == 0:
+            print(f"Convergiu na epoca {epoca}")
+            break
+
 
 treinar()
-print("\nRede neural atualizada:")
-print(calculaSaida(entradas[0]))
-print(calculaSaida(entradas[1]))
-print(calculaSaida(entradas[2]))
-print(calculaSaida(entradas[3])) 
-
-
-    
+print(f"\nPesos finais: {pesos}")
+print("\nRede neural treinada:")
+for i in range(len(entradas)):
+    print(f"  {entradas[i]} -> {calculaSaida(entradas[i])}")
